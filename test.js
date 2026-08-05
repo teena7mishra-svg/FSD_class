@@ -70,3 +70,81 @@ const html = fs.readFileSync("index.html", "utf8");
 const js = fs.readFileSync("script.js", "utf8");
 
 
+// ----------------------------
+// Username Validation Tests
+// ----------------------------
+
+function validateUsername(username) {
+    return /^[A-Za-z ]{3,30}$/.test(username);
+}
+
+test(validateUsername("Teena Mishra"),
+    "Valid username");
+
+test(!validateUsername("T"),
+    "Username too short");
+
+test(!validateUsername("Teena123"),
+    "Username should not contain numbers");
+
+test(!validateUsername(""),
+    "Username should not be empty");
+
+// ----------------------------
+// Email Validation Tests
+// ----------------------------
+
+function validateEmail(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+test(validateEmail("teena@gmail.com"),
+    "Valid email");
+
+test(!validateEmail("teenagmail.com"),
+    "Email missing @");
+
+test(!validateEmail("teena@"),
+    "Email missing domain");
+
+test(!validateEmail("@gmail.com"),
+    "Email missing username");
+
+test(!validateEmail(""),
+    "Email should not be empty");
+
+// ----------------------------
+// Date of Birth Validation Tests
+// ----------------------------
+
+function validateDOB(dob) {
+
+    const birthDate = new Date(dob);
+    const today = new Date();
+
+    if (isNaN(birthDate.getTime()))
+        return false;
+
+    let age = today.getFullYear() - birthDate.getFullYear();
+
+    const month = today.getMonth() - birthDate.getMonth();
+
+    if (month < 0 || (month === 0 && today.getDate() < birthDate.getDate()))
+        age--;
+
+    return age >= 18;
+}
+
+test(validateDOB("2002-05-15"),
+    "Valid age (18+)");
+
+test(!validateDOB("2015-10-10"),
+    "User below 18 years");
+
+test(!validateDOB(""),
+    "Empty Date of Birth");
+
+test(!validateDOB("abcd"),
+    "Invalid Date format");
+
+
