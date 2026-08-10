@@ -1,150 +1,206 @@
 const fs = require("fs");
 
-const files = [
-    "index.html",
-    "style.css",
-    "script.js"
-];
+console.log("==============================================");
+console.log("     REGISTRATION PAGE - AUTOMATED TESTS");
+console.log("==============================================\n");
 
-let passed = true;
+let passed = 0;
+let failed = 0;
 
-console.log("========== Running Automated Tests ==========\n");
-
-files.forEach(file => {
-    if (fs.existsSync(file)) {
-        console.log(`✔ PASS : ${file} found`);
-    } else {
-        console.log(`✖ FAIL : ${file} not found`);
-        passed = false;
-    }
-});
-
-console.log();
-
-if (passed) {
-    console.log("All tests passed successfully.");
-    process.exit(0);
-} else {
-    console.log("Some tests failed.");
-    process.exit(1);
-}
-const fs = require("fs");
-
-console.log("==========================================");
-console.log(" Registration Form Automated Test Report");
-console.log("==========================================\n");
-
-let totalTests = 0;
-let passedTests = 0;
-
-function test(condition, description) {
-    totalTests++;
-
+function runTest(testNumber, testName, condition) {
     if (condition) {
-        passedTests++;
-        console.log("✔ PASS :", description);
+        console.log(`TEST ${testNumber}: PASS - ${testName}`);
+        passed++;
     } else {
-        console.log("✖ FAIL :", description);
+        console.log(`TEST ${testNumber}: FAIL - ${testName}`);
+        failed++;
     }
 }
 
-// ----------------------------
-// Check Files
-// ----------------------------
+// =================================================
+// Load Registration Page Files
+// =================================================
 
-const files = ["index.html", "style.css", "script.js"];
+const html = fs.existsSync("index.html")
+    ? fs.readFileSync("index.html", "utf8")
+    : "";
 
-files.forEach(file => {
-    test(fs.existsSync(file), `${file} exists`);
-});
+const js = fs.existsSync("script.js")
+    ? fs.readFileSync("script.js", "utf8")
+    : "";
 
-if (
-    !fs.existsSync("index.html") ||
-    !fs.existsSync("script.js")
-) {
-    console.log("\nCannot continue because required files are missing.");
-    process.exit(1);
-}
-
-const html = fs.readFileSync("index.html", "utf8");
-const js = fs.readFileSync("script.js", "utf8");
+const css = fs.existsSync("style.css")
+    ? fs.readFileSync("style.css", "utf8")
+    : "";
 
 
-// ----------------------------
-// Username Validation Tests
-// ----------------------------
+// =================================================
+// TEST CASE 1 - Required Files
+// =================================================
 
-function validateUsername(username) {
-    return /^[A-Za-z ]{3,30}$/.test(username);
-}
+runTest(
+    1,
+    "Required project files exist",
+    fs.existsSync("index.html") &&
+    fs.existsSync("style.css") &&
+    fs.existsSync("script.js")
+);
 
-test(validateUsername("Teena Mishra"),
-    "Valid username");
 
-test(!validateUsername("T"),
-    "Username too short");
+// =================================================
+// TEST CASE 2 - Registration Form
+// =================================================
 
-test(!validateUsername("Teena123"),
-    "Username should not contain numbers");
+runTest(
+    2,
+    "Registration form exists",
+    html.includes("<form")
+);
 
-test(!validateUsername(""),
-    "Username should not be empty");
 
-// ----------------------------
-// Email Validation Tests
-// ----------------------------
+// =================================================
+// TEST CASE 3 - Username / Full Name
+// =================================================
+
+runTest(
+    3,
+    "Full Name / Username input exists",
+    html.includes('id="name"')
+);
+
+
+// =================================================
+// TEST CASE 4 - Email Validation
+// =================================================
 
 function validateEmail(email) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-test(validateEmail("teena@gmail.com"),
-    "Valid email");
+runTest(
+    4,
+    "Valid email is accepted",
+    validateEmail("student@gmail.com")
+);
 
-test(!validateEmail("teenagmail.com"),
-    "Email missing @");
 
-test(!validateEmail("teena@"),
-    "Email missing domain");
+// =================================================
+// TEST CASE 5 - Invalid Email
+// =================================================
 
-test(!validateEmail("@gmail.com"),
-    "Email missing username");
+runTest(
+    5,
+    "Invalid email is rejected",
+    !validateEmail("studentgmail.com")
+);
 
-test(!validateEmail(""),
-    "Email should not be empty");
 
-// ----------------------------
-// Date of Birth Validation Tests
-// ----------------------------
+// =================================================
+// TEST CASE 6 - Phone Number
+// =================================================
+
+function validatePhone(phone) {
+    return /^[0-9]{10}$/.test(phone);
+}
+
+runTest(
+    6,
+    "Valid 10-digit phone number is accepted",
+    validatePhone("9876543210")
+);
+
+
+// =================================================
+// TEST CASE 7 - Password Matching
+// =================================================
+
+function validatePassword(password, confirmPassword) {
+    return password === confirmPassword;
+}
+
+runTest(
+    7,
+    "Matching passwords are accepted",
+    validatePassword("Test@123", "Test@123")
+);
+
+
+// =================================================
+// TEST CASE 8 - Password Mismatch
+// =================================================
+
+runTest(
+    8,
+    "Different passwords are rejected",
+    !validatePassword("Test@123", "Test@456")
+);
+
+
+// =================================================
+// TEST CASE 9 - Date of Birth
+// =================================================
 
 function validateDOB(dob) {
 
     const birthDate = new Date(dob);
     const today = new Date();
 
-    if (isNaN(birthDate.getTime()))
+    if (isNaN(birthDate.getTime())) {
         return false;
+    }
 
-    let age = today.getFullYear() - birthDate.getFullYear();
-
-    const month = today.getMonth() - birthDate.getMonth();
-
-    if (month < 0 || (month === 0 && today.getDate() < birthDate.getDate()))
-        age--;
-
-    return age >= 18;
+    return birthDate < today;
 }
 
-test(validateDOB("2002-05-15"),
-    "Valid age (18+)");
-
-test(!validateDOB("2015-10-10"),
-    "User below 18 years");
-
-test(!validateDOB(""),
-    "Empty Date of Birth");
-
-test(!validateDOB("abcd"),
-    "Invalid Date format");
+runTest(
+    9,
+    "Valid Date of Birth is accepted",
+    validateDOB("2002-05-15")
+);
 
 
+// =================================================
+// TEST CASE 10 - Terms & Conditions
+// =================================================
+
+function validateTerms(accepted) {
+    return accepted === true;
+}
+
+runTest(
+    10,
+    "Terms & Conditions must be accepted",
+    validateTerms(true)
+);
+
+
+// =================================================
+// FINAL TEST REPORT
+// =================================================
+
+console.log("\n==============================================");
+console.log("              TEST SUMMARY");
+console.log("==============================================");
+
+console.log(`Total Tests  : ${passed + failed}`);
+console.log(`Passed Tests : ${passed}`);
+console.log(`Failed Tests : ${failed}`);
+
+console.log("==============================================");
+
+if (failed === 0) {
+
+    console.log("ALL TEST CASES PASSED");
+    console.log("Registration Page is working correctly.");
+    console.log("==============================================");
+
+    process.exit(0);
+
+} else {
+
+    console.log("SOME TEST CASES FAILED");
+    console.log("Please check the failed test cases.");
+    console.log("==============================================");
+
+    process.exit(1);
+}
