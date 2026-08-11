@@ -1,64 +1,174 @@
-document.getElementById("registerForm").addEventListener("submit", function(e){
+const form = document.getElementById("studentForm");
+const messageBox = document.getElementById("messageBox");
+const studentList = document.getElementById("studentList");
+
+let students = [];
+
+function showMessage(text, type = "success") {
+    messageBox.textContent = text;
+    messageBox.className = `message ${type}`;
+}
+
+function clearErrors() {
+    document.querySelectorAll(".error-text").forEach(el => el.textContent = "");
+    document.querySelectorAll("input, select").forEach(el => {
+        el.classList.remove("input-invalid");
+    });
+}
+
+function validateField(field, value) {
+
+    switch (field) {
+
+        case "name":
+            if (!value.trim() || value.trim().length < 3 || !/^[A-Za-z\s]+$/.test(value)) {
+                return "Name must contain at least 3 letters.";
+            }
+            break;
+
+        case "email":
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+                return "Invalid Email";
+            }
+            break;
+
+        case "mobile":
+            if (!/^\d{10}$/.test(value)) {
+                return "Mobile must contain 10 digits";
+            }
+            break;
+
+        case "password":
+            if (value.length < 6) {
+                return "Password must be at least 6 characters";
+            }
+            break;
+
+        case "branch":
+            if (!value) {
+                return "Please select branch";
+            }
+            break;
+    }
+
+    return "";
+}
+
+function renderStudents() {
+
+    if (students.length === 0) {
+        studentList.innerHTML = "<li>No students registered yet.</li>";
+        return;
+    }
+
+    studentList.innerHTML = "";
+
+    students.forEach(student => {
+
+        studentList.innerHTML += `
+            <li>
+                <strong>${student.name}</strong> -
+                ${student.email} |
+                ${student.mobile} |
+                ${student.branch}
+            </li>
+        `;
+
+    });
+
+}
+
+async function loadStudents() {
+
+    try {
+
+        const response = await fetch("/students");
+
+        const data = await response.json();
+
+        students = data.students || [];
+
+        renderStudents();
+
+    } catch (err) {
+
+        console.error(err);
+
+    }
+
+}
+
+form.addEventListener("submit", async function (e) {
 
     e.preventDefault();
 
-    let name=document.getElementById("name").value.trim();
-    let email=document.getElementById("email").value.trim();
-    let phone=document.getElementById("phone").value.trim();
-    let password=document.getElementById("password").value;
-    let confirmPassword=document.getElementById("confirmPassword").value;
-    let dob=document.getElementById("dob").value;
-    let terms=document.getElementById("terms").checked;
+    clearErrors();
 
-    let gender=document.querySelector('input[name="gender"]:checked');
+    const formData = new FormData(form);
 
-    let message=document.getElementById("message");
+    const student = Object.fromEntries(formData.entries());
 
-    if(name=="" || email=="" || phone=="" || password=="" || confirmPassword=="" || dob=="")
-    {
-        message.style.color="red";
-        message.innerHTML="Please fill all fields.";
+    let valid = true;
+
+    ["name","email","mobile","password","branch"].forEach(field => {
+
+        const error = validateField(field, student[field]);
+
+        if (error) {
+
+            valid = false;
+
+            document.getElementById(field + "Error").textContent = error;
+
+            document.getElementById(field).classList.add("input-invalid");
+
+        }
+
+    });
+
+    if (!valid) {
+
+        showMessage("Registration Failed", "error");
+
         return;
+
     }
 
-    if(!gender)
-    {
-        message.style.color="red";
-        message.innerHTML="Please select gender.";
-        return;
+    try {
+
+        const response = await fetch("/register", {
+
+            method: "POST",
+
+            headers: {
+
+                "Content-Type": "application/json"
+
+            },
+
+            body: JSON.stringify(student)
+
+        });
+
+        const result = await response.json();
+
+        showMessage(result.message, "success");
+
+        form.reset();
+
+        loadStudents();
+
     }
+    catch (err) {
 
-    if(phone.length!=10 || isNaN(phone))
-    {
-        message.style.color="red";
-        message.innerHTML="Enter a valid 10-digit phone number.";
-        return;
+        console.error(err);
+
+        showMessage("Registration Failed", "error");
+
     }
-
-    if(password.length<6)
-    {
-        message.style.color="red";
-        message.innerHTML="Password must contain at least 6 characters.";
-        return;
-    }
-
-    if(password!==confirmPassword)
-    {
-        message.style.color="red";
-        message.innerHTML="Passwords do not match.";
-        return;
-    }
-
-    if(!terms)
-    {
-        message.style.color="red";
-        message.innerHTML="Accept Terms & Conditions.";
-        return;
-    }
-
-    message.style.color="green";
-    message.innerHTML="Registration Successful!";
-
-    document.getElementById("registerForm").reset();
 
 });
+
+window.onload = loadStudents;
+
+   
