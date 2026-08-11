@@ -2,10 +2,21 @@
   "users": [
     {
       "id": 1,
-      "username": "  ",
-      "email": "teena@example.com",
-      "dob": "2004-05-15"
+      "username": "",
+      "email": "not-an-email",
+      "dob": ""
     },
-   
+    {
+      "id": 2,
+      "username": "123",
+      "email": "invalid-email",
+      "dob": "not-a-date"
+    },
+    {
+      "id": 3,
+      "username": "",
+      "email": "",
+      "dob": "2026-99-99"
+    }
   ]
 }
