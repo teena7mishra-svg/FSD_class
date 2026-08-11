@@ -1,7 +1,7 @@
 const fs = require("fs");
 
 console.log("==============================================");
-console.log("     REGISTRATION PAGE - AUTOMATED TESTS");
+console.log("   REGISTRATION PAGE - JSON DATA TESTS");
 console.log("==============================================\n");
 
 let passed = 0;
@@ -18,7 +18,7 @@ function runTest(testNumber, testName, condition) {
 }
 
 // =================================================
-// Load Registration Page Files
+// Load project files
 // =================================================
 
 const html = fs.existsSync("index.html")
@@ -33,9 +33,80 @@ const css = fs.existsSync("style.css")
     ? fs.readFileSync("style.css", "utf8")
     : "";
 
+// =================================================
+// Load users.json
+// =================================================
+
+let users = [];
+
+if (fs.existsSync("users.json")) {
+    try {
+        const jsonData = JSON.parse(
+            fs.readFileSync("users.json", "utf8")
+        );
+
+        users = Array.isArray(jsonData.users)
+            ? jsonData.users
+            : [];
+
+    } catch (error) {
+        console.log("ERROR: users.json contains invalid JSON.");
+    }
+}
+
+const user = users.length > 0
+    ? users[0]
+    : {};
 
 // =================================================
-// TEST CASE 1 - Required Files
+// Validation Functions
+// =================================================
+
+function validateName(name) {
+    return typeof name === "string" &&
+           name.trim().length >= 3 &&
+           /^[A-Za-z ]+$/.test(name.trim());
+}
+
+function validateEmail(email) {
+    return typeof email === "string" &&
+           /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function validatePhone(phone) {
+    return /^[0-9]{10}$/.test(String(phone));
+}
+
+function validatePassword(password) {
+    return typeof password === "string" &&
+           password.length >= 8 &&
+           /[A-Z]/.test(password) &&
+           /[a-z]/.test(password) &&
+           /[0-9]/.test(password);
+}
+
+function validatePasswordMatch(password, confirmPassword) {
+    return password === confirmPassword;
+}
+
+function validateDOB(dob) {
+
+    const birthDate = new Date(dob);
+    const today = new Date();
+
+    if (!dob || isNaN(birthDate.getTime())) {
+        return false;
+    }
+
+    return birthDate < today;
+}
+
+function validateTerms(accepted) {
+    return accepted === true;
+}
+
+// =================================================
+// TEST 1 - Required Files
 // =================================================
 
 runTest(
@@ -46,9 +117,8 @@ runTest(
     fs.existsSync("script.js")
 );
 
-
 // =================================================
-// TEST CASE 2 - Registration Form
+// TEST 2 - Registration Form
 // =================================================
 
 runTest(
@@ -57,122 +127,98 @@ runTest(
     html.includes("<form")
 );
 
-
 // =================================================
-// TEST CASE 3 - Username / Full Name
+// TEST 3 - Full Name / Username
 // =================================================
 
 runTest(
     3,
-    "Full Name / Username input exists",
-    html.includes('id="name"')
+    "Valid Full Name / Username",
+    validateName(user.name || user.username)
 );
 
-
 // =================================================
-// TEST CASE 4 - Email Validation
+// TEST 4 - Email
 // =================================================
-
-function validateEmail(email) {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
 
 runTest(
     4,
     "Valid email is accepted",
-    validateEmail("student@gmail.com")
+    validateEmail(user.email)
 );
 
-
 // =================================================
-// TEST CASE 5 - Invalid Email
+// TEST 5 - Phone Number
 // =================================================
 
 runTest(
     5,
-    "Invalid email is rejected",
-    !validateEmail("studentgmail.com")
+    "Valid 10-digit phone number is accepted",
+    validatePhone(user.phone)
 );
 
-
 // =================================================
-// TEST CASE 6 - Phone Number
+// TEST 6 - Password
 // =================================================
-
-function validatePhone(phone) {
-    return /^[0-9]{10}$/.test(phone);
-}
 
 runTest(
     6,
-    "Valid 10-digit phone number is accepted",
-    validatePhone("9876543210")
+    "Valid password is accepted",
+    validatePassword(user.password)
 );
 
-
 // =================================================
-// TEST CASE 7 - Password Matching
+// TEST 7 - Password Matching
 // =================================================
-
-function validatePassword(password, confirmPassword) {
-    return password === confirmPassword;
-}
 
 runTest(
     7,
     "Matching passwords are accepted",
-    validatePassword("Test@123", "Test@123")
+    validatePasswordMatch(
+        user.password,
+        user.confirmPassword
+    )
 );
 
-
 // =================================================
-// TEST CASE 8 - Password Mismatch
+// TEST 8 - Date of Birth
 // =================================================
 
 runTest(
     8,
-    "Different passwords are rejected",
-    !validatePassword("Test@123", "Test@456")
+    "Valid Date of Birth is accepted",
+    validateDOB(user.dob)
 );
 
-
 // =================================================
-// TEST CASE 9 - Date of Birth
+// TEST 9 - Terms & Conditions
 // =================================================
-
-function validateDOB(dob) {
-
-    const birthDate = new Date(dob);
-    const today = new Date();
-
-    if (isNaN(birthDate.getTime())) {
-        return false;
-    }
-
-    return birthDate < today;
-}
 
 runTest(
     9,
-    "Valid Date of Birth is accepted",
-    validateDOB("2002-05-15")
+    "Terms & Conditions are accepted",
+    validateTerms(user.termsAccepted)
 );
 
-
 // =================================================
-// TEST CASE 10 - Terms & Conditions
+// TEST 10 - Complete Registration Record
 // =================================================
-
-function validateTerms(accepted) {
-    return accepted === true;
-}
 
 runTest(
     10,
-    "Terms & Conditions must be accepted",
-    validateTerms(true)
-);
+    "Complete registration record is valid",
 
+    validateName(user.name || user.username) &&
+    validateEmail(user.email) &&
+    validatePhone(user.phone) &&
+    validatePassword(user.password) &&
+    validatePasswordMatch(
+        user.password,
+        user.confirmPassword
+    ) &&
+    validateDOB(user.dob) &&
+    validateTerms(user.termsAccepted)
+);
 
 // =================================================
 // FINAL TEST REPORT
@@ -191,7 +237,7 @@ console.log("==============================================");
 if (failed === 0) {
 
     console.log("ALL TEST CASES PASSED");
-    console.log("Registration Page is working correctly.");
+    console.log("Registration data is valid.");
     console.log("==============================================");
 
     process.exit(0);
@@ -204,3 +250,4 @@ if (failed === 0) {
 
     process.exit(1);
 }
+
