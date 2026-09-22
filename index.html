@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Student Demo</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h1>Student Registration Demo</h1>
+
+        <!-- Register Section -->
+
+        <div id="registerBox">
+
+            <h2>Register</h2>
+
+            <input type="text" id="regName" placeholder="Enter Name">
+
+            <input type="email" id="regEmail" placeholder="Enter Email">
+
+            <input type="password" id="regPassword" placeholder="Enter Password">
+
+            <button onclick="registerStudent()">
+                Register
+            </button>
+
+            <p>
+                Already Registered?
+
+                <a href="#" onclick="showLogin()">
+                    Login
+                </a>
+            </p>
+
+        </div>
+
+        <!-- Login Section -->
+
+        <div id="loginBox" style="display:none;">
+
+            <h2>Login</h2>
+
+            <input type="email" id="loginEmail" placeholder="Enter Email">
+
+            <input type="password" id="loginPassword" placeholder="Enter Password">
+
+            <button onclick="loginStudent()">
+                Login
+            </button>
+
+            <p>
+                New Student?
+
+                <a href="#" onclick="showRegister()">
+                    Register
+                </a>
+            </p>
+
+        </div>
+
+        <!-- Home Section -->
+
+        <div id="homeBox" style="display:none;">
+
+            <h2 id="welcomeText"></h2>
+
+            <p>Login Successful</p>
+
+            <button onclick="logout()">
+                Logout
+            </button>
+
+        </div>
+
+    </div>
+
+<script>
+
+function showLogin(){
+
+document.getElementById("registerBox").style.display="none";
+document.getElementById("loginBox").style.display="block";
+
+}
+
+function showRegister(){
+
+document.getElementById("loginBox").style.display="none";
+document.getElementById("registerBox").style.display="block";
+
+}
+
+// Registration
+
+async function registerStudent(){
+
+const name=document.getElementById("regName").value;
+const email=document.getElementById("regEmail").value;
+const password=document.getElementById("regPassword").value;
+
+const response=await fetch("/register",{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({
+name,
+email,
+password
+})
+
+});
+
+const data=await response.json();
+
+alert(data.message);
+
+if(data.success){
+
+showLogin();
+
+}
+
+}
+
+// Login
+
+async function loginStudent(){
+
+const email=document.getElementById("loginEmail").value;
+
+const password=document.getElementById("loginPassword").value;
+
+const response=await fetch("/login",{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({
+email,
+password
+})
+
+});
+
+const data=await response.json();
+
+if(data.success){
+
+document.getElementById("loginBox").style.display="none";
+
+document.getElementById("homeBox").style.display="block";
+
+document.getElementById("welcomeText").innerHTML=
+"Welcome " + data.name;
+
+}
+else{
+
+alert(data.message);
+
+}
+
+}
+
+function logout(){
+
+document.getElementById("homeBox").style.display="none";
+
+document.getElementById("loginBox").style.display="block";
+
+}
+
+</script>
+
+</body>
+
+</html>
