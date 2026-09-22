@@ -1,52 +1,104 @@
 const express = require("express");
+const cors = require("cors");
 const fs = require("fs");
 const path = require("path");
 
 const app = express();
+const PORT = 5000;
 
+app.use(cors());
 app.use(express.json());
-app.use(express.static(__dirname));
 
-const filePath = path.join(__dirname, "student.json");
+// Serve frontend
+app.use(express.static(path.join(__dirname, "public")));
 
-app.get("/students", (req, res) => {
+const filePath = path.join(__dirname, "data.json");
 
+// Read JSON file
+function readData() {
     if (!fs.existsSync(filePath)) {
-
-        fs.writeFileSync(filePath, JSON.stringify({ students: [] }, null, 2));
-
+        fs.writeFileSync(filePath, "[]");
     }
 
-    const data = JSON.parse(fs.readFileSync(filePath));
+    return JSON.parse(fs.readFileSync(filePath));
+}
 
-    res.json(data);
+// Write JSON file
+function writeData(data) {
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+}
 
-});
+// ---------------- Register ----------------
 
 app.post("/register", (req, res) => {
 
-    let data = { students: [] };
+    const { name, email, password } = req.body;
 
-    if (fs.existsSync(filePath)) {
+    let students = readData();
 
-        data = JSON.parse(fs.readFileSync(filePath));
+    const exists = students.find(student => student.email === email);
 
+    if (exists) {
+        return res.json({
+            success: false,
+            message: "Email already registered"
+        });
     }
 
-    data.students.push(req.body);
+    students.push({
+        name,
+        email,
+        password
+    });
 
-    fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+    writeData(students);
 
     res.json({
-
+        success: true,
         message: "Registration Successful"
-
     });
 
 });
 
-app.listen(3000, () => {
+// ---------------- Login ----------------
 
-    console.log("Server Running : http://localhost:3000");
+app.post("/login", (req, res) => {
+
+    const { email, password } = req.body;
+
+    let students = readData();
+
+    const student = students.find(
+        s => s.email === email && s.password === password
+    );
+
+    if (!student) {
+        return res.json({
+            success: false,
+            message: "Invalid Email or Password"
+        });
+    }
+
+    res.json({
+        success: true,
+        name: student.name,
+        message: "Login Successful"
+    });
 
 });
+
+// Get all users (optional)
+
+app.get("/students", (req, res) => {
+
+    res.json(readData());
+
+});
+
+app.listen(PORT, () => {
+
+    console.log(`Server Running at http://localhost:${PORT}`);
+
+});
+
+   
